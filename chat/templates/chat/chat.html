@@ -2,39 +2,70 @@
 {% load dict_extras %}
 {% block content %}
 
-<div class="header-bar chat-header" style="display: flex; align-items: center; justify-content: space-between; padding: 10px;">
+<div class="chat-header">
     {% for user in chat.participants.all %}
         {% if user != request.user %}
-            <div class="chat-user-block" style="display: flex; align-items: center;">
-                <a href="{% url 'profile_by_id' user.id %}">
-                    {% if user.profile.avatar %}
-                        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="chat-header-avatar" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
-                    {% else %}
-                        <img src="/static/default-avatar.png" alt="No avatar" class="chat-header-avatar" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
-                    {% endif %}
-                </a>
-
-                <h2 class="chat-header-username" style="margin: 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div style="display: flex; align-items: center;">
                     <a href="{% url 'profile_by_id' user.id %}">
+                        {% if user.profile.avatar %}
+                            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="chat-header-avatar" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+                        {% else %}
+                            <img src="/static/default-avatar.png" alt="No avatar" class="chat-header-avatar" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+                        {% endif %}
+                    </a>
+                    <h2 class="chat-header-username" style="margin: 0;">
+                        <a href="{% url 'profile_by_id' user.id %}">
+                            {% with contact=contacts_map|get_item:user.id %}
+                                {% if contact %}
+                                    {{ contact.display_name|default:user.username }}
+                                {% else %}
+                                    {{ user.username }}
+                                {% endif %}
+                            {% endwith %}
+                        </a>
+                    </h2>
+                </div>
+
+                <div class="action-menu" style="position: relative;">
+                    <button class="actionMenuBtn">⋮</button>
+                    <div class="dropdown-content">
                         {% with contact=contacts_map|get_item:user.id %}
                             {% if contact %}
-                                {{ contact.display_name|default:user.username }}
+                                <form method="post" action="{% url 'edit_contact_name' contact.id %}">
+                                    {% csrf_token %}
+                                    <input type="text" name="display_name" value="{{ contact.display_name }}" placeholder="Имя в контактах" required>
+                                    <button type="submit">Сохранить имя</button>
+                                </form>
                             {% else %}
-                                {{ user.username }}
+                                <form action="{% url 'add_contact' %}" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="username" value="{{ user.username }}">
+                                    <button type="submit">Добавить в контакты</button>
+                                </form>
                             {% endif %}
                         {% endwith %}
-                    </a>
-                </h2>
+
+                        <form action="{% url 'delete_chat' chat.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('Удалить чат?')">Удалить чат</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         {% endif %}
     {% endfor %}
 
-    <a href="{% url 'index' %}" class="btn-back-to-chats">←</a>
+<div style="display: flex; align-items: center; gap: 8px;">
+    <button class="theme-toggle" id="themeToggle" title="Переключить тему">🌓</button>
+    <a href="{% url 'index' %}" class="btn-back-to-chats" title="Назад к чатам">←</a>
+</div>
+
 </div>
 
 <div id="messages">
     {% regroup chat.messages.all by timestamp.date as messages_by_date %}
-    
+
     {% for date_group in messages_by_date %}
         <div class="date-separator">{{ date_group.grouper|date:"d.m.Y" }}</div>
         {% for msg in date_group.list %}
@@ -63,5 +94,40 @@
     <button type="submit">⮞</button>
 </form>
 
+<script>
+    // dropdown menu logic
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.actionMenuBtn').forEach((btn, index) => {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const dropdown = btn.nextElementSibling;
+                dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+
+                document.querySelectorAll('.dropdown-content').forEach((menu, i) => {
+                    if (i !== index) menu.style.display = 'none';
+                });
+            });
+        });
+
+        document.addEventListener('click', function () {
+            document.querySelectorAll('.dropdown-content').forEach(drop => drop.style.display = 'none');
+        });
+
+        // Theme toggle logic
+        const toggleBtn = document.getElementById('themeToggle');
+        const body = document.body;
+
+        // Apply saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            body.classList.add('dark-theme');
+        }
+
+        toggleBtn.addEventListener('click', function () {
+            body.classList.toggle('dark-theme');
+            const theme = body.classList.contains('dark-theme') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+        });
+    });
+</script>
 
 {% endblock %}

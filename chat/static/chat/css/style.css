@@ -978,3 +978,20 @@ mark {
     text-decoration: none;
     cursor: pointer;
 }
+
+.theme-toggle,
+.btn-back-to-chats {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: var(--text-color);
+    transition: background-color 0.2s;
+    border-radius: 6px;
+}
+
+.theme-toggle:hover,
+.btn-back-to-chats:hover {
+    background-color: rgba(144, 202, 249, 0.1);
+}
