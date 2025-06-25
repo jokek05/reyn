@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Редактировать сообщение</h2>
+  <form method="post">
+    {% csrf_token %}
+    <textarea name="text" rows="4" cols="50">{{ message.text }}</textarea><br>
+    <button type="submit">Сохранить</button>
+    <a href="{% url 'chat' chat_id=message.chat.id %}">Отмена</a>
+  </form>
+{% endblock %}

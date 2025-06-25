@@ -1,0 +1,120 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>reyn</title>
+    <link rel="stylesheet" href="{% static 'chat/css/style.css' %}">
+    <link rel="icon" href="{% static 'chat/images/favicon.jpg' %}" type="image/x-icon">
+</head>
+<body>
+{% if not request.path|slice:":6" == "/chat/" %}
+<header class="header-bar">
+    <div class="header-left">
+    <a href="{% url 'profile_self' %}" class="user-profile-link">
+        {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" alt="Аватар пользователя {{ user.username }}" class="header-avatar">
+        {% endif %}
+        <span class="header-username">{{ user.username }}</span>
+    </a>
+
+    </div>
+
+    <div class="header-title">reyn</div>
+
+    <div class="header-right">
+        {% if user.is_authenticated %}
+            <div class="action-menu">
+                <button class="actionMenuBtn" type="button">☰ Меню</button>
+                <div class="dropdown-content">
+                    <form action="{% url 'profile_self' %}" method="get">
+                        <button type="submit">👤 Профиль</button>
+                    </form>
+                    <form action="{% url 'contacts' %}" method="get">
+                        <button type="submit">👥 Контакты</button>
+                    </form>
+                    <form action="{% url 'index' %}" method="get">
+                        <button type="submit">💬 Мои чаты</button>
+                    </form>
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit">🚪 Выход</button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <a href="{% url 'login' %}">Вход</a>
+            <a href="{% url 'signup' %}">Регистрация</a>
+        {% endif %}
+        <button class="theme-toggle" id="themeToggle">🌓</button>
+    </div>
+</header>
+{% endif %}
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Универсальное меню (поддержка нескольких)
+    const menuButtons = document.querySelectorAll('.actionMenuBtn');
+
+    menuButtons.forEach(btn => {
+        const dropdown = btn.nextElementSibling;
+
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+
+            // Закрываем другие открытые меню
+            document.querySelectorAll('.dropdown-content').forEach(menu => {
+                if (menu !== dropdown) menu.classList.remove('show');
+            });
+
+            dropdown.classList.toggle('show');
+        });
+    });
+
+    // Клик вне меню
+    document.addEventListener('click', function () {
+        document.querySelectorAll('.dropdown-content').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    });
+
+    // Escape закрывает меню
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.dropdown-content').forEach(menu => {
+                menu.classList.remove('show');
+            });
+        }
+    });
+
+    // Тёмная тема
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+
+    function setTheme(dark) {
+        if (dark) {
+            html.classList.add('dark-theme');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            html.classList.remove('dark-theme');
+            localStorage.setItem('theme', 'light');
+        }
+    }
+
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        setTheme(true);
+    }
+
+    themeToggle.addEventListener('click', () => {
+        const isDark = html.classList.contains('dark-theme');
+        setTheme(!isDark);
+    });
+});
+</script>
+</body>
+</html>

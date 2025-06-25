@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="profile-container">
+    <h1>Профиль {{ profile_user.username }}</h1>
+
+    <div style="text-align: center;">
+        {% if profile_user.profile.avatar %}
+            <img src="{{ profile_user.profile.avatar.url }}" alt="{{ profile_user.username }}" style="max-width: 150px; border-radius: 50%;">
+        {% else %}
+            <img src="/static/default-avatar.png" alt="Нет аватара" style="max-width: 150px; border-radius: 50%;">
+        {% endif %}
+    </div>
+
+    {% if profile_user == user %}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {{ form.display_name.label_tag }}<br>
+            {{ form.display_name }}<br><br>
+
+            <label for="id_avatar">Изменить аватар</label><br>
+            <input type="file" id="id_avatar" name="avatar" style="display:none;" 
+                onchange="document.getElementById('filename').textContent = this.files[0]?.name || 'Файл не выбран';">
+            <button type="button" onclick="document.getElementById('id_avatar').click();">Выбрать файл</button>
+
+            <button type="submit">Обновить</button>
+        </form>
+    {% else %}
+        {% if form %}
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.display_name.label_tag }}<br>
+                {{ form.display_name }}<br>
+                <button type="submit">Сохранить имя в контактах</button>
+            </form>
+        {% else %}
+            <p>Редактировать имя в контактах можно только для добавленных контактов.</p>
+        {% endif %}
+
+        <p>Email: {{ profile_user.email }}</p>
+
+        <a href="{% url 'chat_with_user' profile_user.id %}" class="btn-chat-with-user">💬 Написать сообщение</a>
+    {% endif %}
+
+    {% if profile_user == user %}
+        <div class="profile-actions">
+            <a href="{% url 'index' %}">🗨️ Мои чаты</a><br>
+            <a href="{% url 'contacts' %}">👥 Контакты</a><br>
+            <a href="{% url 'create_chat' %}">➕ Новый чат</a><br>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    // Если форма уже содержит выбранный файл (например, при редактировании), покажем его имя
+    const fileInput = document.getElementById('id_avatar');
+    const fileNameSpan = document.getElementById('filename');
+    if (fileInput && fileInput.files.length > 0) {
+        fileNameSpan.textContent = fileInput.files[0].name;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="contacts-container">
+    <h2>Ваши контакты</h2>
+
+    <div class="add-contact">
+        <a href="{% url 'add_contact' %}" class="btn btn-primary">Добавить контакт</a>
+    </div>
+
+    <ul class="contacts-list">
+        {% for contact in contacts %}
+            <li class="contact-item">
+                <a href="{% url 'profile_by_id' contact.contact.id %}" class="contact-link">
+                    {% if contact.contact.profile.avatar %}
+                        <img src="{{ contact.contact.profile.avatar.url }}" alt="Аватар" class="contact-avatar">
+                    {% else %}
+                        <div class="contact-avatar-placeholder">?</div>
+                    {% endif %}
+                    <div class="contact-info">
+                        <strong>
+                            {{ contact.display_name|default:contact.contact.username }}
+                        </strong>
+                    </div>
+                </a>
+            </li>
+        {% empty %}
+            <li>У вас пока нет контактов.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

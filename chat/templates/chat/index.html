@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load dict_extras %}
+{% block content %}
+
+<form id="chat-search-form">
+  <input
+    type="text"
+    id="chat-search-input"
+    placeholder="Поиск чатов..."
+    autocomplete="off"
+  />
+</form>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('chat-search-input');
+    const chatList = document.querySelector('.chat-list');
+    const chats = chatList.querySelectorAll('.chat-item');
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase().trim();
+
+      chats.forEach(chat => {
+        const nameElement = chat.querySelector('.chat-name');
+        const nameText = nameElement.textContent;
+        const lowerName = nameText.toLowerCase();
+
+        if (query && lowerName.includes(query)) {
+          chat.style.display = '';
+          const startIndex = lowerName.indexOf(query);
+          const endIndex = startIndex + query.length;
+
+          nameElement.innerHTML = `${nameText.slice(0, startIndex)}<mark>${nameText.slice(startIndex, endIndex)}</mark>${nameText.slice(endIndex)}`;
+        } else if (!query) {
+          chat.style.display = '';
+          nameElement.innerHTML = nameText; 
+        } else {
+          chat.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+
+    <h2 class="centered-heading">Ваши чаты</h2>
+
+
+<div class="chat-list">
+    {% for chat in chats %}
+        {% for participant in chat.participants.all %}
+            {% if participant != user %}
+                <a href="{% url 'chat' chat.id %}" class="chat-item" target="_blank">
+                    <img src="{{ participant.profile.avatar.url|default:'https://via.placeholder.com/50' }}" alt="{{ participant.username }} аватар" class="chat-avatar">
+                    <div class="chat-info">
+                        <div class="chat-name">
+                            {% with contact=contacts_map|get_item:participant.id %}
+                                {% if contact and contact.display_name %}
+                                    {{ contact.display_name }}
+                                {% else %}
+                                    {{ participant.username }}
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                        <div class="chat-last-message">
+                            {% with chat.messages.last as last_msg %}
+                                {% if last_msg %}
+                                    {{ last_msg.text|truncatechars:40 }}
+                                {% else %}
+                                    Нет сообщений
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    <div class="chat-time">
+                        {% with chat.messages.last as last_msg %}
+                            {% if last_msg %}
+                                {{ last_msg.timestamp|date:"H:i" }}
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </a>
+            {% endif %}
+        {% endfor %}
+    {% empty %}
+        <p>У вас пока нет чатов</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

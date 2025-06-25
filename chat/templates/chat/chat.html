@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load dict_extras %}
+{% block content %}
+
+<div class="header-bar chat-header" style="display: flex; align-items: center; justify-content: space-between; padding: 10px;">
+    {% for user in chat.participants.all %}
+        {% if user != request.user %}
+            <div class="chat-user-block" style="display: flex; align-items: center;">
+                <a href="{% url 'profile_by_id' user.id %}">
+                    {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="chat-header-avatar" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+                    {% else %}
+                        <img src="/static/default-avatar.png" alt="No avatar" class="chat-header-avatar" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+                    {% endif %}
+                </a>
+
+                <h2 class="chat-header-username" style="margin: 0;">
+                    <a href="{% url 'profile_by_id' user.id %}">
+                        {% with contact=contacts_map|get_item:user.id %}
+                            {% if contact %}
+                                {{ contact.display_name|default:user.username }}
+                            {% else %}
+                                {{ user.username }}
+                            {% endif %}
+                        {% endwith %}
+                    </a>
+                </h2>
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    <a href="{% url 'index' %}" class="btn-back-to-chats">←</a>
+</div>
+
+<div id="messages">
+    {% regroup chat.messages.all by timestamp.date as messages_by_date %}
+    
+    {% for date_group in messages_by_date %}
+        <div class="date-separator">{{ date_group.grouper|date:"d.m.Y" }}</div>
+        {% for msg in date_group.list %}
+            <div class="msg-container {% if msg.sender == request.user %}own{% endif %}">
+                {% if msg.sender != request.user %}
+                    <img src="{{ msg.sender.profile.avatar.url }}" alt="{{ msg.sender.username }}" class="msg-avatar">
+                {% endif %}
+                <div class="msg-bubble">
+                    <div class="msg-text">{{ msg.text }}</div>
+                    <div class="msg-footer">
+                        <span class="timestamp">{{ msg.timestamp|date:"H:i" }}</span>
+                        {% if msg.sender == request.user %}
+                            <a href="{% url 'edit_message' msg.id %}" class="edit-icon" title="Редактировать сообщение">✏️</a>
+                            <a href="{% url 'delete_message' msg.id %}" class="delete-icon" title="Удалить сообщение">🗑️</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endfor %}
+</div>
+
+<form method="post" action="" class="message-form">
+    {% csrf_token %}
+    <textarea name="text" placeholder="Введите сообщение" required></textarea>
+    <button type="submit">⮞</button>
+</form>
+
+
+{% endblock %}
